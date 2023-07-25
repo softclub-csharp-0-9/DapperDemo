@@ -10,7 +10,8 @@ public class ContactService
     {
         using (var connection = new NpgsqlConnection(_connectionString))
         {
-            return  connection.Query<Contact>("SELECT * FROM contacts").ToList();
+            var sql = "SELECT * FROM contacts";
+            return  connection.Query<Contact>(sql).ToList();
         }
     }
 
@@ -25,26 +26,22 @@ public class ContactService
             {
                 using (var reader = command.ExecuteReader())
                 {
-                    var product = new Contact()
+                    while (reader.Read())
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        Name = reader.GetString(reader.GetOrdinal("Name")),
-                        Phone = reader.GetString(reader.GetOrdinal("Phone")),
-                    };
-                    contacts.Add(product);
+                        //map 
+                        var product = new Contact()
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                        };
+                        contacts.Add(product);
+                    }
                 }
             }
         }
-
         return contacts;
     }
-
-
-
-
-
-
-
 
 
     public int AddContact(Contact contact)
@@ -52,12 +49,9 @@ public class ContactService
         // Add contact to database
         using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
         {
-            string sql = $"INSERT INTO contact (name, phone) " +
-                         $"VALUES (" +
-                         $"'{contact.Name}', " +
-                         $"'{contact.Phone}'";
-            var response = connection.Execute(sql);
 
+            string sql = $"insert into contacts (id,name,phone) values (@id,@name,@phone);";
+            var response = connection.Execute(sql,new {contact.Id,contact.Name,contact.Phone});
             return response;
         }
     }
@@ -66,11 +60,8 @@ public class ContactService
     {
         using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
         {
-            string sql = $"update contact set " +
-                         $"name = '{contact.Name}', " +
-                         $"phone='{contact.Phone}', " +
-                         $"where id = {contact.Id};";
-            var response = connection.Execute(sql);
+            string sql = "update contacts set name=@name, phone=@phone where id=@id;";
+            var response = connection.Execute(sql,new {contact.Name,contact.Phone, contact.Id});
             return response;
         }
     }
@@ -79,17 +70,17 @@ public class ContactService
     {
         using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
         {
-            string sql = $"delete from contact where id = {id}";
-            var response = connection.Execute(sql);
+            string sql = $"delete from contact where id=@id";
+            var response = connection.Execute(sql,new {id});
             return response;
         }
     }
 
-    public Contact GetContactById(string id)
+    public Contact GetContactById(int id)
     {
         using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
         {
-            string sql = $"select * from contact where id = @id";
+            string sql = $"select * from contacts where id = @id";
             var response = connection.QuerySingleOrDefault<Contact>(sql, new { id });
             return response;
         }
