@@ -1,6 +1,9 @@
 ﻿using DapperDemo;
 
+
 var contactService = new ContactService();
+
+contactService.SpecificColumn();
 
 while (true)
 {
@@ -37,7 +40,6 @@ void Create()
     
 }
 
-
 void Update()
 {
     Console.Write("Enter the Id of the contanct : Id = ");
@@ -55,5 +57,5 @@ void Update()
         existing.Phone = inputPhone;
 
     contactService.UpdateContact(existing);
-    
 }
+
